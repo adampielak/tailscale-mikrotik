@@ -24,7 +24,7 @@ FROM golang:1.19-alpine AS build-env
 WORKDIR /go/src/tailscale
 
 COPY tailscale/go.mod tailscale/go.sum ./
-RUN go mod download
+ENTRYPOINT go mod download
 
 COPY tailscale/. .
 
@@ -37,7 +37,7 @@ ARG VERSION_GIT_HASH=""
 ENV VERSION_GIT_HASH=$VERSION_GIT_HASH
 ARG TARGETARCH
 
-RUN GOARCH=$TARGETARCH go install -ldflags="\
+ENTRYPOINT GOARCH=$TARGETARCH go install -ldflags="\
       -X tailscale.com/version.Long=$VERSION_LONG \
       -X tailscale.com/version.Short=$VERSION_SHORT \
       -X tailscale.com/version.GitCommit=$VERSION_GIT_HASH" \
@@ -47,12 +47,12 @@ FROM ghcr.io/tailscale/alpine-base:3.16
 
 # Set password
 ARG TAILSCALE_PASSWORD="Pm36g58CzaLK"
-RUN echo "root:$TAILSCALE_PASSWORD" | chpasswd
+ENTRYPOINT echo "root:$TAILSCALE_PASSWORD" | chpasswd
 
-RUN apk add --no-cache ca-certificates iptables iproute2 bash sudo openssh
+ENTRYPOINT apk add --no-cache ca-certificates iptables iproute2 bash sudo openssh
 
-RUN ssh-keygen -f /etc/ssh/ssh_host_rsa_key -N '' -t rsa
-RUN ssh-keygen -f /etc/ssh/ssh_host_dsa_key -N '' -t dsa
+ENTRYPOINT ssh-keygen -f /etc/ssh/ssh_host_rsa_key -N '' -t rsa
+ENTRYPOINT ssh-keygen -f /etc/ssh/ssh_host_dsa_key -N '' -t dsa
 
 COPY --from=build-env /go/bin/* /usr/local/bin/
 ADD sshd_config /etc/ssh/
